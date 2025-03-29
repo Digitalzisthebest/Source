@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Generator</title>
+    <style>
+      body {
+        background: #121212;
+        color: white;
+        font-family: Arial, sans-serif;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+      }
+
+      .input-box {
+        width: 300px;
+        padding: 15px;
+        border-radius: 10px;
+        border: 2px solid #555;
+        background: #222;
+        color: white;
+        font-size: 18px;
+        text-align: center;
+        outline: none;
+      }
+
+      .input-box:focus {
+        border-color: #00a86b;
+        background: #333;
+      }
+
+      .btn {
+        margin-top: 20px;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        background: #00a86b;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+      }
+
+      .btn:hover {
+        background: #008f5d;
+      }
+
+      .result {
+        margin-top: 20px;
+        font-size: 16px;
+      }
+
+      .loading {
+        font-size: 18px;
+        color: #00a86b;
+      }
+
+      .error {
+        color: red;
+      }
+    </style>
+  </head>
+  <body>
+    <input
+      type="text"
+      id="username"
+      class="input-box"
+      placeholder="Enter your username"
+    />
+    <button class="btn" id="generate-btn" onclick="uploadToPastebin()">Generate</button>
+    <div class="result" id="result"></div>
+
+    <script>
+      function uploadToPastebin() {
+        const username = document.getElementById("username").value.trim();
+        if (!username) {
+          alert("Please enter your username!");
+          return;
+        }
+
+        document.getElementById("result").innerText = "";
+        const loadingMessage = document.createElement("div");
+        loadingMessage.classList.add("loading");
+        loadingMessage.innerText = "Uploading...";
+        document.getElementById("result").appendChild(loadingMessage);
+
+        fetch("/upload.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username }),
+        })
+          .then((response) => {
+            if (response.redirected) {
+              loadingMessage.remove();
+              const successMessage = document.createElement("div");
+              successMessage.innerText = "✅ File created successfully, forwarding in 3 seconds...";
+              document.getElementById("result").appendChild(successMessage);
+
+              setTimeout(() => {
+                window.location.href = response.url;
+
+                const link = document.createElement("a");
+                link.href = response.url;
+                const timestamp = new Date().toISOString().replace(/[-:.]/g, "");
+                link.download = `${timestamp}_${response.url.split('/').pop()}`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+              }, 3000);
+            } else {
+              return response.json();
+            }
+          })
+          .then((data) => {
+            if (data && data.error) {
+              loadingMessage.remove();
+              const errorMessage = document.createElement("div");
+              errorMessage.classList.add("error");
+              errorMessage.innerText = "❌ Failed to create file!";
+              document.getElementById("result").appendChild(errorMessage);
+            }
+          })
+          .catch((err) => {
+            console.error(err);
+            loadingMessage.remove();
+            const errorMessage = document.createElement("div");
+            errorMessage.classList.add("error");
+            errorMessage.innerText = "❌ An error occurred!";
+            document.getElementById("result").appendChild(errorMessage);
+          });
+      }
+
+      document.getElementById("username").addEventListener("keypress", function (event) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          document.getElementById("generate-btn").click();
+        }
+      });
+    </script>
+  </body>
+</html>
