@@ -46,8 +46,11 @@ if (is_dir($cache_dir)) {
     $files = glob($cache_dir . '/*.lua');
     $now = time();
     foreach ($files as $file) {
-        if (is_file($file) && ($now - filemtime($file)) > 3 * 60) {
-            unlink($file);
+        if (is_file($file)) {
+            $file_mtime = filemtime($file);
+            if ($file_mtime !== false && ($now - $file_mtime) > 3 * 60) {
+                unlink($file);
+            }
         }
     }
 }

